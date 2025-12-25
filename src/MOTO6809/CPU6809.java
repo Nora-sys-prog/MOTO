@@ -173,7 +173,7 @@ public class CPU6809 {
 		// Modes étendus
 		int mode = postbyte & 0x0F;
 		switch (mode) {
-		case 0x00: { // ,R+
+		case 0x80: { // ,R+
 			int address = baseReg;
 			setIndexRegister(regBits, baseReg + 1);
 			String desc = String.format(",%s+", regName);
@@ -182,7 +182,7 @@ public class CPU6809 {
 			else
 				return new AddressingResult(mem.getByte(address) & 0xFF, address, desc, 5, false);
 		}
-		case 0x01: { // ,R++
+		case 0x81: { // ,R++
 			int address = baseReg;
 			setIndexRegister(regBits, baseReg + 2);
 			String desc = String.format(",%s++", regName);
@@ -191,7 +191,7 @@ public class CPU6809 {
 			else
 				return new AddressingResult(mem.getByte(address) & 0xFF, address, desc, 6, false);
 		}
-		case 0x02: { // ,-R
+		case 0x82: { // ,-R
 			int address = (baseReg - 1) & 0xFFFF;
 			setIndexRegister(regBits, address);
 			String desc = String.format(",-%s", regName);
@@ -200,7 +200,7 @@ public class CPU6809 {
 			else
 				return new AddressingResult(mem.getByte(address) & 0xFF, address, desc, 5, false);
 		}
-		case 0x03: { // ,--R
+		case 0x83: { // ,--R
 			int address = (baseReg - 2) & 0xFFFF;
 			setIndexRegister(regBits, address);
 			String desc = String.format(",--%s", regName);
@@ -209,7 +209,7 @@ public class CPU6809 {
 			else
 				return new AddressingResult(mem.getByte(address) & 0xFF, address, desc, 6, false);
 		}
-		case 0x04: { // ,R
+		case 0x84: { // ,R
 			int address = baseReg;
 			String desc = String.format(",%s", regName);
 			if (is16bit)
@@ -2201,302 +2201,8 @@ public class CPU6809 {
 			cycles = 3;
 			break;
 		}
-		// ========================================
-		// BRA - Branch Always (indexed mode)
-		// ========================================
-		case 0x20: {
-		    mnemonique = "BRA";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    // Saut direct vers l'adresse indexée
-		    registres.setPC(addr.address);
-
-		    cycles = addr.cycles;
-		    break;
-		}
-		// ========================================
-		// BRN - Branch Never (indexed mode)
-		// ========================================
-		// ========================================
-		// BRN - Branch Never (indexed mode)
-		// ========================================
-		// ========================================
-		// BRN - Branch Never (indexed mode)
-		// ========================================
-		// ========================================
-		// BRN - Branch Never (indexed mode)
-		// gère : BRN ,X  ET  BRN 5,X
-		// ========================================
-		case 0x21: {
-		    mnemonique = "BRN";
-		    AddressingResult addr = decodeIndexed(false);
-		    
-		    // Construction de l'opérande
-		    if (addr.description == null || addr.description.trim().isEmpty()) {
-		        operande = ",X";
-		    } else {
-		        // Supprime l'espace devant si présent
-		        String desc = addr.description.trim();
-		        if (desc.startsWith(" ")) {
-		            desc = desc.substring(1);
-		        }
-		        operande = desc;
-		    }
-		    
-		    // S'assurer que operande n'est jamais null
-		    if (operande == null) {
-		        operande = "";
-		    }
-		    
-		    cycles = addr.cycles;
-		    break;
-		}
 
 		// ========================================
-		// BSR - Branch to Subroutine (indexed mode)
-		// ========================================
-		case 0x8D: {
-		    mnemonique = "BSR";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    // Empiler l'adresse de retour
-		    pushStack16(registres.getPC());
-
-		    // Saut vers l'adresse indexée
-		    registres.setPC(addr.address);
-
-		    cycles = addr.cycles + 2;
-		    break;
-		}
-		case 0x24: { // BCC (indexé)
-		    mnemonique = "BCC";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    // bit C = 0 ?
-		    if ((registres.getCC() & Registres.CC_C) == 0) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-		case 0x25: { // BCS (indexé)
-		    mnemonique = "BCS";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    // bit C = 1 ?
-		    if ((registres.getCC() & Registres.CC_C) != 0) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-		case 0x27: { // BEQ (indexé)
-		    mnemonique = "BEQ";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    // bit Z = 1 ?
-		    if ((registres.getCC() & Registres.CC_Z) != 0) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-		// ========================================
-		// BNE - Branch if Not Equal (indexed mode)
-		// ========================================
-		case 0x26: {
-		    mnemonique = "BNE";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    if ((registres.getCC() & Registres.CC_Z) == 0) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-		case 0x2A: {
-		    mnemonique = "BPL";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    if ((registres.getCC() & Registres.CC_N) == 0) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-		case 0x2B: {
-		    mnemonique = "BMI";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    if ((registres.getCC() & Registres.CC_N) != 0) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		} 
-		// ========================================
-		// BVC - Branch if Overflow Clear (indexed mode)
-		// ========================================
-		case 0x28: {
-		    mnemonique = "BVC";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    if ((registres.getCC() & Registres.CC_V) == 0) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-		// ========================================
-		// BVS - Branch if Overflow Set (indexed mode)
-		// ========================================
-		case 0x29: {
-		    mnemonique = "BVS";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    if ((registres.getCC() & Registres.CC_V) != 0) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-
-		// ========================================
-		// BHI - Branch if Higher (indexed mode)
-		// ========================================
-		case 0x22: {
-		    mnemonique = "BHI";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    if (((registres.getCC() & Registres.CC_C) == 0) &&
-		        ((registres.getCC() & Registres.CC_Z) == 0)) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-
-		// ========================================
-		// BLS - Branch if Lower or Same (indexed mode)
-		// ========================================
-		case 0x23: {
-		    mnemonique = "BLS";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    if (((registres.getCC() & Registres.CC_C) != 0) ||
-		        ((registres.getCC() & Registres.CC_Z) != 0)) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-		// ========================================
-		// BGE - Branch if Greater or Equal (indexed mode)
-		// ========================================
-		case 0x2C: {
-		    mnemonique = "BGE";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    boolean N = (registres.getCC() & Registres.CC_N) != 0;
-		    boolean V = (registres.getCC() & Registres.CC_V) != 0;
-
-		    if (N == V) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-		// ========================================
-		// BLT - Branch if Less Than (indexed mode)
-		// ========================================
-		case 0x2D: {
-		    mnemonique = "BLT";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    boolean N = (registres.getCC() & Registres.CC_N) != 0;
-		    boolean V = (registres.getCC() & Registres.CC_V) != 0;
-
-		    if (N != V) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-		// ========================================
-		// BGT - Branch if Greater Than (indexed mode)
-		// ========================================
-		case 0x2E: {
-		    mnemonique = "BGT";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    boolean Z = (registres.getCC() & Registres.CC_Z) != 0;
-		    boolean N = (registres.getCC() & Registres.CC_N) != 0;
-		    boolean V = (registres.getCC() & Registres.CC_V) != 0;
-
-		    if (!Z && (N == V)) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-		// ========================================
-		// BLE - Branch if Less or Equal (indexed mode)
-		// ========================================
-		case 0x2F: {
-		    mnemonique = "BLE";
-		    AddressingResult addr = decodeIndexed(false);
-		    operande = " " + addr.description;
-
-		    boolean Z = (registres.getCC() & Registres.CC_Z) != 0;
-		    boolean N = (registres.getCC() & Registres.CC_N) != 0;
-		    boolean V = (registres.getCC() & Registres.CC_V) != 0;
-
-		    if (Z || (N != V)) {
-		        registres.setPC(addr.address);
-		    }
-
-		    cycles = addr.cycles + 1;
-		    break;
-		}
-
-
-
-
-
-
-
-
-
-		
-// ========================================
 		// JSR - Jump to Subroutine (indexed mode)
 		// ========================================
 		case 0xAD: {

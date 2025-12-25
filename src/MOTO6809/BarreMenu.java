@@ -10,8 +10,7 @@ public class BarreMenu extends JMenuBar {
 
 	public BarreMenu(Memoire memoire) {
 		this.memoire = memoire;
-		String[] menuTitres = { "File", "Edit", "Source", "Refactor", "Navigate", "Search", "Project", "Run", "Window",
-				"Help" };
+		String[] menuTitres = { "File", "Search", "Help" };
 		for (String titre : menuTitres) {
 			JMenu menu = new JMenu(titre);
 			ajouterItems(menu, titre);

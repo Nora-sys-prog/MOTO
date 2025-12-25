@@ -436,31 +436,28 @@ public class Assembleur {
 		opcodes.put("ABX", 0x3A);
 		opcodes.put("DAA", 0x19);
 		opcodes.put("SEX", 0x1D);
+		
 		opcodes.put("END", 0x3F);
 
 		// ========================================
 		// Branches (8-bit relative)
 		// ========================================
-		// ========================================
-		// Branches personnalisées en MODE INDEXÉ
-		// ========================================
-		opcodes.put("BRA indexed", 0x20); 
-		opcodes.put("BRN indexed", 0x21); 
-		opcodes.put("BSR indexed", 0x8D); 
-        opcodes.put("BHI indexed", 0x22);
-		opcodes.put("BLS indexed", 0x23);
-		opcodes.put("BCC indexed", 0x24);
-		opcodes.put("BCS indexed", 0x25);
-		opcodes.put("BEQ indexed", 0x27);
-		opcodes.put("BNE indexed", 0x26);
-		opcodes.put("BVC indexed", 0x28);
-		opcodes.put("BVS indexed", 0x29);
-		opcodes.put("BPL indexed", 0x2A);
-		opcodes.put("BMI indexed", 0x2B);
-		opcodes.put("BGE indexed", 0x2C);
-		opcodes.put("BLT indexed", 0x2D);
-		opcodes.put("BGT indexed", 0x2E);
-		opcodes.put("BLE indexed", 0x2F);
+		opcodes.put("BRA", 0x20);
+		opcodes.put("BRN", 0x21);
+		opcodes.put("BHI", 0x22);
+		opcodes.put("BLS", 0x23);
+		opcodes.put("BCC", 0x24);
+		opcodes.put("BCS", 0x25);
+		opcodes.put("BNE", 0x26);
+		opcodes.put("BEQ", 0x27);
+		opcodes.put("BVC", 0x28);
+		opcodes.put("BVS", 0x29);
+		opcodes.put("BPL", 0x2A);
+		opcodes.put("BMI", 0x2B);
+		opcodes.put("BGE", 0x2C);
+		opcodes.put("BLT", 0x2D);
+		opcodes.put("BGT", 0x2E);
+		opcodes.put("BLE", 0x2F);
 
 		// ========================================
 		// Jumps
@@ -522,7 +519,6 @@ public class Assembleur {
 	}
 
 	public void assembler(String code, Memoire mem, int adresseDepart) throws Exception {
-		
 		String[] lignes = code.split("\n");
 		int adresse = adresseDepart;
 
@@ -532,8 +528,6 @@ public class Assembleur {
 			ligne = ligne.trim();
 			if (ligne.isEmpty() || ligne.startsWith(";"))
 				continue;
-
-
 
 			// Gérer la directive ORG
 			if (ligne.toUpperCase().startsWith("ORG")) {
@@ -565,31 +559,6 @@ public class Assembleur {
 			ligne = ligne.trim();
 			if (ligne.isEmpty() || ligne.startsWith(";") || ligne.endsWith(":"))
 				continue;
-			
-			// --- Compter les instructions ---
-			int instructionCount = 0;
-			adresse = adresseDepart; // remettre le PC au début
-
-			for (String instr : lignes) {  // <- utiliser 'instr' au lieu de 'ligne'
-			    instr = instr.trim();
-
-			    // Ignorer lignes vides, commentaires et labels seuls
-			    if (instr.isEmpty() || instr.startsWith(";") || instr.endsWith(":"))
-			        continue;
-
-			    // Ignorer directives ORG
-			    if (instr.toUpperCase().startsWith("ORG"))
-			        continue;
-
-			    try {
-			        int taille = assemblerLigne(instr, mem, adresse); // juste pour compter
-			        adresse += taille;
-			        instructionCount++;
-			    } catch (Exception e) {
-			        System.err.println("Erreur à la ligne: " + instr + " -> " + e.getMessage());
-			    }
-			}
-
 
 			// Gérer ORG
 			if (ligne.toUpperCase().startsWith("ORG")) {
@@ -610,9 +579,8 @@ public class Assembleur {
 
 		System.out.printf("\n✅ Assemblage terminé : %d bytes générés\n", adresse - adresseDepart);
 	}
-	
 
-	public int assemblerLigne(String ligne, Memoire mem, int adresse) throws Exception {
+	private int assemblerLigne(String ligne, Memoire mem, int adresse) throws Exception {
 		String[] parts = ligne.split("\\s+", 2);
 		String instr = parts[0].toUpperCase();
 		String operande = parts.length > 1 ? parts[1].trim() : "";
@@ -1356,73 +1324,34 @@ public class Assembleur {
 				return 2;
 			}
 		}
+
 		// ========================================
-		// BRA / BRN / BSR — MODE INDEXÉ
-		// (copie exacte de JSR indexed, sans push PC pour BRA/BRN)
+		// Mode Extended ($xxxx - 4 chiffres hex)
 		// ========================================
+		if (operande.startsWith("$") && operande.length() > 3) {
+			int value = Integer.parseInt(operande.substring(1), 16);
+			Integer opcode = opcodes.get(instr + " ext");
+			if (opcode == null)
+				throw new Exception("Instruction inconnue: " + instr + " extended");
+
+			mem.forceSetByte(adresse, (byte) opcode.intValue());
+			mem.forceSetByte(adresse + 1, (byte) ((value >> 8) & 0xFF));
+			mem.forceSetByte(adresse + 2, (byte) (value & 0xFF));
+			return 3;
+		}
+
 		// ========================================
-		// BRANCHES — MODE INDEXÉ (TOUTES)
-		// BRA BRN BSR BCC BCS BEQ BNE BPL BMI ...
+		// Mode Direct ($xx - 2 chiffres hex)
 		// ========================================
-		if (instr.matches("BRA|BRN|BSR|BHI|BLS|BCC|BCS|BNE|BEQ|BVC|BVS|BPL|BMI|BGE|BLT|BGT|BLE")) {
+		if (operande.startsWith("$")) {
+			int value = Integer.parseInt(operande.substring(1), 16);
+			Integer opcode = opcodes.get(instr);
+			if (opcode == null)
+				throw new Exception("Instruction inconnue: " + instr + " direct");
 
-		    if (!operande.contains(",")) {
-		        throw new Exception(instr + " nécessite le mode indexé");
-		    }
-
-		    Integer opcode = opcodes.get(instr + " indexed");
-		    if (opcode == null) {
-		        throw new Exception("Instruction inconnue: " + instr + " indexed");
-		    }
-
-		    // écrire opcode
-		    mem.forceSetByte(adresse, (byte) opcode.intValue());
-
-		    // ===== décodage indexé IDENTIQUE à JMP / JSR =====
-		    String[] indexParts = operande.split(",");
-		    if (indexParts.length < 2) {
-		        throw new Exception("Opérande invalide pour " + instr + ": " + operande);
-		    }
-		    String offset = indexParts[0].trim();
-		    String reg = indexParts[1].trim();
-
-		    byte base;
-		    switch (reg) {
-		        case "X": base = 0x00; break;
-		        case "Y": base = 0x20; break;
-		        case "U": base = 0x40; break;
-		        case "S": base = 0x60; break;
-		        default: throw new Exception("Registre indexé invalide: " + reg);
-		    }
-
-		    // ,X (déplacement nul)
-		    if (offset.isEmpty()) {
-		        mem.forceSetByte(adresse + 1, (byte) (0x84 | base));
-		        return 2;
-		    }
-
-		    int val = offset.startsWith("$")
-		            ? Integer.parseInt(offset.substring(1), 16)
-		            : Integer.parseInt(offset);
-
-		    // 5-bit offset (-16 à +15)
-		    if (val >= -16 && val <= 15) {
-		        mem.forceSetByte(adresse + 1, (byte) (base | (val & 0x1F)));
-		        return 2;
-		    }
-		    // 8-bit offset (-128 à +127)
-		    else if (val >= -128 && val <= 127) {
-		        mem.forceSetByte(adresse + 1, (byte) (0x88 | base));
-		        mem.forceSetByte(adresse + 2, (byte) val);
-		        return 3;
-		    }
-		    // 16-bit offset
-		    else {
-		        mem.forceSetByte(adresse + 1, (byte) (0x89 | base));
-		        mem.forceSetByte(adresse + 2, (byte) ((val >> 8) & 0xFF));
-		        mem.forceSetByte(adresse + 3, (byte) (val & 0xFF));
-		        return 4;
-		    }
+			mem.forceSetByte(adresse, (byte) opcode.intValue());
+			mem.forceSetByte(adresse + 1, (byte) value);
+			return 2;
 		}
 
 		// ========================================
@@ -1481,7 +1410,6 @@ public class Assembleur {
 						return 4;
 					}
 				}
-				
 
 				// Offset par registre
 				if (offset.equals("A")) {
@@ -1707,7 +1635,6 @@ public class Assembleur {
 			}
 			return 3; // Extended mode
 		}
-		
 
 		if (instr.equals("TST")) {
 			if (operande.startsWith("$") && operande.length() > 3)

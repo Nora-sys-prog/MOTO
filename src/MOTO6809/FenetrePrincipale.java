@@ -6,133 +6,119 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FenetrePrincipale extends JFrame {
-	public Memoire memoire = new Memoire();
-	public Registres registres = new Registres();
-	public CPU6809 cpu = new CPU6809(registres, memoire);
-	private List<JFrame> fenetresOuvertes = new ArrayList<>(); // Liste pour synchroniser
+    public Memoire memoire = new Memoire();
+    public Registres registres = new Registres();
+    public CPU6809 cpu = new CPU6809(registres, memoire);
+    private List<JFrame> fenetresOuvertes = new ArrayList<>(); // Liste pour synchroniser
 
-	public FenetrePrincipale() {
-		setTitle("Simu6809");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		// setSize(1440, 63);
-		setSize(Toolkit.getDefaultToolkit().getScreenSize().width, 90);
-		setLayout(new BorderLayout()); // Utilise BorderLayout pour fixer la barre en haut
-		// setLocationRelativeTo(null);
-		// setUndecorated(true); // Supprimer les décorations (bordures, titre) pour une
-		// apparence fixe
-		// Positionner en haut de l'écran et définir la taille (pleine largeur, hauteur
-		// fixe)
-		// Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		// setSize(screenSize.width, 100); // Hauteur de 100 pixels, ajustez selon vos
-		// besoins
+    private JWindow fondNoir; // <- fenêtre noire plein écran
 
-		setLayout(new BorderLayout());// Utiliser BorderLayout pour organiser le contenu
-		setResizable(false); // Dimension reste fixe
-		setAlwaysOnTop(true); // Rendre la fenêtre toujours en haut
-		setLocation(0, 0); // En haut à gauche
+    public FenetrePrincipale() {
 
-		setJMenuBar(new BarreMenu(memoire)); // ← on passe la mémoire
+        // ===== FOND NOIR PLEIN ÉCRAN =====
+    	fondNoir = new JWindow();
+    	fondNoir.getContentPane().setBackground(Color.BLACK);
+    	fondNoir.setBackground(new Color(0, 0, 0, 255));
+    	Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    	fondNoir.setBounds(0, 0, screenSize.width, screenSize.height);
+    	// Retirer AlwaysOnTop pour laisser les autres fenêtres par-dessus
+    	// fondNoir.setAlwaysOnTop(true);
+    	fondNoir.setVisible(true);
 
-		// Créer le bouton Registre
-		JButton Registre = new JButton("Registre");
-		Registre.setText("📁");
-		Registre.setBorderPainted(false);
-		Registre.setContentAreaFilled(false);
-		Registre.setFocusPainted(false);
-		Registre.setToolTipText("Registre");
-		Registre.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        // ===== FENETRE PRINCIPALE EXISTANTE =====
+        setTitle("Simu6809");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(screenSize.width, 90);
+        setLayout(new BorderLayout());
+        setResizable(false);
+        setAlwaysOnTop(true);
+        setLocation(0, 0);
 
-		// Créer le bouton Émulateur (Assembleur/Éditeur)
-		JButton Emulateur = new JButton("Émulateur");
-		Emulateur.setText("🖥️");
-		Emulateur.setBorderPainted(false);
-		Emulateur.setContentAreaFilled(false);
-		Emulateur.setFocusPainted(false);
-		Emulateur.setToolTipText("Éditeur Assembleur 6809");
-		Emulateur.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        setJMenuBar(new BarreMenu(memoire));
 
-		// Action du bouton : ouvre votre éditeur assembleur existant
-		Emulateur.addActionListener(e -> {
-			AssembleurView view = new AssembleurView();
-			new AssembleurController(view, memoire, registres); // Voilà la correction clé
-			view.setVisible(true);
-		});
+        JButton Registre = new JButton("📁");
+        Registre.setBorderPainted(false);
+        Registre.setContentAreaFilled(false);
+        Registre.setFocusPainted(false);
+        Registre.setToolTipText("Registre");
+        Registre.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        Registre.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24)); // icône haute qualité
 
-		// Créer le bouton RAM
-		JButton RAM = new JButton("RAM");
-		RAM.setText("💾");
-		RAM.setBorderPainted(false);
-		RAM.setContentAreaFilled(false);
-		RAM.setFocusPainted(false);
-		RAM.setToolTipText("RAM");
-		RAM.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        JButton Emulateur = new JButton("🖥️");
+        Emulateur.setBorderPainted(false);
+        Emulateur.setContentAreaFilled(false);
+        Emulateur.setFocusPainted(false);
+        Emulateur.setToolTipText("Éditeur Assembleur 6809");
+        Emulateur.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        Emulateur.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        Emulateur.addActionListener(e -> {
+            AssembleurView view = new AssembleurView();
+            new AssembleurController(view, memoire, registres);
+            view.setVisible(true);
+        });
 
-		// Créer le bouton ROM
-		JButton ROM = new JButton("ROM");
-		ROM.setText("💿");
-		ROM.setBorderPainted(false);
-		ROM.setContentAreaFilled(false);
-		ROM.setFocusPainted(false);
-		ROM.setToolTipText("ROM");
-		ROM.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        JButton RAM = new JButton("💾");
+        RAM.setBorderPainted(false);
+        RAM.setContentAreaFilled(false);
+        RAM.setFocusPainted(false);
+        RAM.setToolTipText("RAM");
+        RAM.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        RAM.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
 
-		// Créer le bouton du Synchronisation
-		JButton Synchroniser = new JButton("🔄");
-		Synchroniser.setBorderPainted(false);
-		Synchroniser.setContentAreaFilled(false);
-		Synchroniser.setFocusPainted(false);
-		Synchroniser.setToolTipText("Synchroniser RAM/ROM");
-		Synchroniser.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		Synchroniser.addActionListener(e -> synchroniserFenetres());
+        JButton ROM = new JButton("💿");
+        ROM.setBorderPainted(false);
+        ROM.setContentAreaFilled(false);
+        ROM.setFocusPainted(false);
+        ROM.setToolTipText("ROM");
+        ROM.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        ROM.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
 
-		// Action au clic
-		// Actions au clic : Ajoute à la liste
-		Registre.addActionListener(e -> {
-			FenetreRegistre fen = new FenetreRegistre(this, registres, cpu);
-			fenetresOuvertes.add(fen);
-		});
-		RAM.addActionListener(e -> {
-			FenetreRAM fen = new FenetreRAM(this, memoire);
-			fenetresOuvertes.add(fen);
-		});
-		ROM.addActionListener(e -> {
-			FenetreROM fen = new FenetreROM(this, memoire);
-			fenetresOuvertes.add(fen);
-		});
+        JButton Synchroniser = new JButton("🔄");
+        Synchroniser.setBorderPainted(false);
+        Synchroniser.setContentAreaFilled(false);
+        Synchroniser.setFocusPainted(false);
+        Synchroniser.setToolTipText("Synchroniser RAM/ROM");
+        Synchroniser.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        Synchroniser.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        Synchroniser.addActionListener(e -> synchroniserFenetres());
 
-		// Mise en page centrée et élégante
-		JPanel panel = new JPanel(new GridBagLayout());
-		panel.setBackground(new Color(250, 250, 252));
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.insets = new Insets(40, 100, 40, 100);
+        Registre.addActionListener(e -> {
+            FenetreRegistre fen = new FenetreRegistre(this, registres, cpu);
+            fenetresOuvertes.add(fen);
+        });
+        RAM.addActionListener(e -> {
+            FenetreRAM fen = new FenetreRAM(this, memoire);
+            fenetresOuvertes.add(fen);
+        });
+        ROM.addActionListener(e -> {
+            FenetreROM fen = new FenetreROM(this, memoire);
+            fenetresOuvertes.add(fen);
+        });
 
-		// Ajoutez Registre dans le panel
-		gbc.gridx = 0;
-		panel.add(Registre, gbc);
-		// Ajoutez RAM dans le panel
-		gbc.gridx = 1;
-		panel.add(RAM, gbc);
-		// Ajoutez ROM dans le panel
-		gbc.gridx = 2;
-		panel.add(ROM, gbc);
-		// Ajoutez Émulateur dans le panel
-		gbc.gridx = 3;
-		panel.add(Emulateur, gbc);
-		// Ajoutez Synchronisation dans le panel
-		gbc.gridx = 4;
-		panel.add(Synchroniser, gbc);
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(new Color(250, 250, 252));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(40, 100, 40, 100);
 
-		add(panel);
-		setVisible(true);
-	}
+        gbc.gridx = 0; panel.add(Registre, gbc);
+        gbc.gridx = 1; panel.add(RAM, gbc);
+        gbc.gridx = 2; panel.add(ROM, gbc);
+        gbc.gridx = 3; panel.add(Emulateur, gbc);
+        gbc.gridx = 4; panel.add(Synchroniser, gbc);
 
-	private void synchroniserFenetres() {
-		for (JFrame fen : fenetresOuvertes) {
-			if (fen instanceof FenetreRAM) {
-				((FenetreRAM) fen).rafraichir();
-			} else if (fen instanceof FenetreROM) {
-				((FenetreROM) fen).rafraichir();
-			}
-		}
-	}
+        add(panel);
+        setVisible(true);
+
+        // ===== FIN FENETRE PRINCIPALE =====
+    }
+
+    private void synchroniserFenetres() {
+        for (JFrame fen : fenetresOuvertes) {
+            if (fen instanceof FenetreRAM) {
+                ((FenetreRAM) fen).rafraichir();
+            } else if (fen instanceof FenetreROM) {
+                ((FenetreROM) fen).rafraichir();
+            }
+        }
+    }
 }

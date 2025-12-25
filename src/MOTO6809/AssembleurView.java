@@ -14,11 +14,10 @@ public class AssembleurView extends JFrame {
     public JButton btnOpen;
     public JButton btnSave;
     public JButton btnClear;
-    public JLabel lblInstructionCount;
 
     // Liste des instructions 6809
     private final String[] instructions = {
-        "LDA","LDX","LDY","STA","STX","STY","ADDA","ADDB","ADD","SUBA","SUBB","CMPA","CMPB",
+        "LDA","LDX","LDB","LDY","STA","STX","STY","ADDA","ADDB","ADD","SUBA","SUBB","CMPA","CMPB",
         "JMP","JSR","RTS","NOP","INC","DEC","AND","OR","EOR","BIT","ASL","ASR","LSL","LSR",
         "LEA","EXG","PSH","PUL","CWAI","NEG","DAA"
     };
@@ -50,12 +49,6 @@ public class AssembleurView extends JFrame {
         scroll.setRowHeaderView(lineNumbers);
 
         add(scroll);
-        
-     // ===== Ajouter le label pour le nombre d'instructions =====
-        lblInstructionCount = new JLabel("Nombre d'instructions : 0");
-        lblInstructionCount.setForeground(Color.WHITE); // texte visible sur fond noir
-        lblInstructionCount.setBounds(20, 380, 300, 25); // position sous la zone de texte
-        add(lblInstructionCount);
 
         // Boutons
         btnRun   = createDarkButton("Exécuter");
@@ -63,10 +56,10 @@ public class AssembleurView extends JFrame {
         btnSave  = createDarkButton("Enregistrer");
         btnClear = createDarkButton("Effacer");
 
-        btnRun.setBounds(20, 410, 120, 30);
-        btnOpen.setBounds(150, 410, 120, 30);
-        btnSave.setBounds(280, 410, 120, 30);
-        btnClear.setBounds(410, 410, 120, 30);
+        btnRun.setBounds(20, 390, 120, 30);
+        btnOpen.setBounds(160, 390, 120, 30);
+        btnSave.setBounds(300, 390, 120, 30);
+        btnClear.setBounds(440, 390, 120, 30);
 
         add(btnRun);
         add(btnOpen);
